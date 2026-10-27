@@ -25,3 +25,11 @@ docker compose up --build
 ```bash
 docker compose run --rm backend pytest
 ```
+
+## QA dataset
+
+```bash
+docker compose run --rm backend python manage.py seed_testing
+```
+
+Deletes and recreates two test users, `tester1` and `tester2` (password `testing-pass-123`), each with 3 resume versions and 40 applications whose status histories and notes are spread over the last 60 days. It uses the same factories as the test suite. Options: `--applications N` per user and `--seed S` for a different but repeatable dataset.
