@@ -8,3 +8,7 @@ __pycache__/
 
 # Local uploads (dev media lives in a Docker volume)
 backend/media/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/

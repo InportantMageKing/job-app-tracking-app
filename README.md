@@ -16,14 +16,17 @@ Django + Django REST Framework, PostgreSQL, React (Vite), Docker Compose.
 docker compose up --build
 ```
 
-- API: http://localhost:8000/api/
+- App: http://localhost:5173
+- API: http://localhost:8000/api/ (the app reaches it through the Vite proxy at `/api`)
 - Health check: http://localhost:8000/api/health/
 - Django admin: http://localhost:8000/admin/ (create a login with `docker compose run --rm backend python manage.py createsuperuser`)
 
 ## Test
 
 ```bash
-docker compose run --rm backend pytest
+docker compose run --rm backend pytest                          # backend
+docker compose run --rm --no-deps frontend npm test             # frontend
+docker compose run --rm --no-deps frontend npm run typecheck    # frontend types
 ```
 
 ## QA dataset
