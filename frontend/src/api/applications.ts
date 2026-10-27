@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { apiFetch, jsonBody } from "./client";
-import type { Application, ApplicationInput, Source, Status } from "./types";
+import type { Application, ApplicationDetail, ApplicationEvent, ApplicationInput, NewEvent, Source, Status } from "./types";
 
 export interface ApplicationFilters {
   status?: Status | "";
@@ -61,6 +61,39 @@ export function useUpdateApplication(id: number) {
       apiFetch<Application>(`/applications/${id}/`, { method: "PATCH", body: jsonBody(input) }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["application", id] });
+      void queryClient.invalidateQueries({ queryKey: ["applications"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["resume-versions"] });
+    },
+  });
+}
+
+export function useApplication(id: number) {
+  return useQuery({
+    queryKey: ["application", id],
+    queryFn: () => apiFetch<ApplicationDetail>(`/applications/${id}/`),
+  });
+}
+
+export function useAddEvent(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (event: NewEvent) =>
+      apiFetch<ApplicationEvent>(`/applications/${id}/events/`, { method: "POST", body: jsonBody(event) }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["application", id] });
+      void queryClient.invalidateQueries({ queryKey: ["applications"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useDeleteApplication() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiFetch<void>(`/applications/${id}/`, { method: "DELETE" }),
+    onSuccess: (_result, id) => {
+      queryClient.removeQueries({ queryKey: ["application", id] });
       void queryClient.invalidateQueries({ queryKey: ["applications"] });
       void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       void queryClient.invalidateQueries({ queryKey: ["resume-versions"] });
