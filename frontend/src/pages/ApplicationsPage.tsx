@@ -17,12 +17,7 @@ export function ApplicationsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className={ui.heading}>Applications</h1>
-        <Link to="/applications/new" className={ui.primary}>
-          New application
-        </Link>
-      </div>
+      <h1 className={ui.heading}>Applications</h1>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <input

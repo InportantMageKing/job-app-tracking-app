@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
 import { ui } from "./ui";
@@ -34,6 +34,9 @@ export function Layout() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
+            <Link to="/applications/new" className={ui.primary}>
+              + New application
+            </Link>
             <span className="text-slate-400">{username}</span>
             <button type="button" className={ui.secondary} onClick={() => void logout()}>
               Log out
