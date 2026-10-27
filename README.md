@@ -21,6 +21,15 @@ docker compose up --build
 - Health check: http://localhost:8000/api/health/
 - Django admin: http://localhost:8000/admin/ (create a login with `docker compose run --rm backend python manage.py createsuperuser`)
 
+## Try it
+
+```bash
+docker compose up -d --build
+docker compose run --rm backend python manage.py seed_testing
+```
+
+Open http://localhost:5173 and log in as `tester1` / `testing-pass-123` (or `tester2` to see that accounts are isolated).
+
 ## Test
 
 ```bash
