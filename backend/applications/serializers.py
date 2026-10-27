@@ -37,6 +37,14 @@ class ApplicationSerializer(serializers.ModelSerializer):
     def get_resume_version_name(self, obj):
         return obj.resume_version.name if obj.resume_version else None
 
+    def update(self, instance, validated_data):
+        # Save only the edited columns, so a concurrent status change (which locks and
+        # writes current_status) is never overwritten by this request's stale copy.
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save(update_fields=[*validated_data, "updated_at"])
+        return instance
+
     def validate_resume_version(self, value):
         if value is not None and value.user_id != self.context["request"].user.id:
             raise serializers.ValidationError("Resume version not found.")

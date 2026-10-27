@@ -141,3 +141,25 @@ def test_delete_removes_application_and_events(auth_client, user):
     assert auth_client.delete(detail_url(application)).status_code == 204
     assert not Application.objects.exists()
     assert not ApplicationEvent.objects.exists()
+
+
+def test_patch_never_overwrites_a_concurrent_status_change(user):
+    """A PATCH that loaded the row before a status change must not write the old status back."""
+    from rest_framework.test import APIRequestFactory
+
+    from applications.serializers import ApplicationSerializer
+    from applications.services import change_status
+
+    application = ApplicationFactory(user=user, company="Old Name")
+    stale = Application.objects.get(pk=application.pk)  # what a PATCH's get_object() would have loaded
+    change_status(application=application, to_status=Status.INTERVIEW)  # commits in between
+
+    request = APIRequestFactory().patch("/")
+    request.user = user
+    serializer = ApplicationSerializer(stale, data={"company": "New Name"}, partial=True, context={"request": request})
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    application.refresh_from_db()
+    assert application.company == "New Name"
+    assert application.current_status == Status.INTERVIEW
