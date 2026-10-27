@@ -7,12 +7,12 @@ const COLUMNS: { stage: Status; label: string }[] = [
 ];
 
 export function ResumePerformanceTable({ rows }: { rows: ResumePerformance[] }) {
-  if (rows.length === 0) return <p className="text-sm text-slate-500">No resume versions yet.</p>;
+  if (rows.length === 0) return <p className="text-sm text-slate-400">No resume versions yet.</p>;
 
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
-        <thead className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <thead className="text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
           <tr>
             <th className="py-2 pr-4">Resume</th>
             <th className="py-2 pr-4">Applications</th>
@@ -23,7 +23,7 @@ export function ResumePerformanceTable({ rows }: { rows: ResumePerformance[] }) 
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-800">
           {rows.map((row) => (
             <tr key={row.resume_version_id ?? "none"}>
               <td className="py-2 pr-4 font-medium">{row.resume_version_id === null ? "No resume" : row.name}</td>

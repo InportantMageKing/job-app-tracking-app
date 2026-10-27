@@ -10,7 +10,7 @@ import { ui } from "../components/ui";
 export function DashboardPage() {
   const stats = useDashboardStats();
 
-  if (stats.isPending) return <p className="text-slate-500">Loading…</p>;
+  if (stats.isPending) return <p className="text-slate-400">Loading…</p>;
   if (stats.isError) {
     return (
       <p role="alert" className={ui.error}>
@@ -25,7 +25,7 @@ export function DashboardPage() {
     return (
       <div className={`${ui.card} space-y-3 text-center`}>
         <h1 className={ui.heading}>No applications yet</h1>
-        <p className="text-slate-500">Add your first application to start tracking your search.</p>
+        <p className="text-slate-400">Add your first application to start tracking your search.</p>
         <Link to="/applications/new" className={ui.primary}>
           New application
         </Link>
@@ -41,7 +41,7 @@ export function DashboardPage() {
         <section className={`${ui.card} space-y-3`}>
           <div>
             <h2 className="font-semibold">Funnel</h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               Share of {data.funnel.total} applications that ever reached each stage.
             </p>
           </div>
@@ -50,7 +50,7 @@ export function DashboardPage() {
         <section className={`${ui.card} space-y-3`}>
           <div>
             <h2 className="font-semibold">Applications per week</h2>
-            <p className="text-sm text-slate-500">Last 12 weeks, by date applied.</p>
+            <p className="text-sm text-slate-400">Last 12 weeks, by date applied.</p>
           </div>
           <WeeklyChart weeks={data.per_week} />
         </section>

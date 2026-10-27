@@ -60,7 +60,7 @@ export function AddEventForm({ currentStatus, onSubmit }: Props) {
       aria-pressed={mode === value}
       onClick={() => switchMode(value)}
       className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium ${
-        mode === value ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+        mode === value ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800"
       }`}
     >
       {label}
@@ -69,7 +69,7 @@ export function AddEventForm({ currentStatus, onSubmit }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex gap-1 rounded-lg border border-slate-200 p-1">
+      <div className="flex gap-1 rounded-lg border border-slate-800 p-1">
         {modeButton("note", "Add note")}
         {modeButton("status_change", "Change status")}
       </div>

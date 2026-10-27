@@ -10,7 +10,7 @@ export function ApplicationNewPage() {
 
   return (
     <div className="space-y-4">
-      <Link to="/applications" className="text-sm text-slate-500 hover:underline">
+      <Link to="/applications" className="text-sm text-slate-400 hover:underline">
         ← All applications
       </Link>
       <h1 className={ui.heading}>New application</h1>

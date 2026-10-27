@@ -42,22 +42,22 @@ export function ResumesPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {resumes.isPending ? (
-            <p className="text-slate-500">Loading…</p>
+            <p className="text-slate-400">Loading…</p>
           ) : resumes.isError ? (
             <p role="alert" className={ui.error}>
               {resumes.error.message}
             </p>
           ) : resumes.data.length === 0 ? (
-            <div className={`${ui.card} text-slate-500`}>No resume versions yet. Upload your first one.</div>
+            <div className={`${ui.card} text-slate-400`}>No resume versions yet. Upload your first one.</div>
           ) : (
             resumes.data.map((resume) => (
               <article key={resume.id} className={`${ui.card} space-y-2`}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="font-semibold">{resume.name}</h2>
-                  <span className="text-xs text-slate-500">Uploaded {formatDateTime(resume.created_at)}</span>
+                  <span className="text-xs text-slate-400">Uploaded {formatDateTime(resume.created_at)}</span>
                 </div>
-                {resume.description && <p className="text-sm text-slate-700">{resume.description}</p>}
-                <p className="text-sm text-slate-500">
+                {resume.description && <p className="text-sm text-slate-300">{resume.description}</p>}
+                <p className="text-sm text-slate-400">
                   Used in {resume.application_count} application{resume.application_count === 1 ? "" : "s"}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
@@ -66,7 +66,7 @@ export function ResumesPage() {
                   </button>
                   {confirmingId === resume.id ? (
                     <>
-                      <span className="text-sm text-slate-600">Delete this version? Applications using it will show no resume.</span>
+                      <span className="text-sm text-slate-400">Delete this version? Applications using it will show no resume.</span>
                       <button
                         type="button"
                         className={ui.danger}

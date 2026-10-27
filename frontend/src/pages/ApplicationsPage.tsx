@@ -62,17 +62,17 @@ export function ApplicationsPage() {
       </div>
 
       {applications.isPending ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-slate-400">Loading…</p>
       ) : applications.isError ? (
         <p role="alert" className={ui.error}>
           {applications.error.message}
         </p>
       ) : applications.data.length === 0 ? (
-        <div className={`${ui.card} text-center text-slate-500`}>No applications match these filters.</div>
+        <div className={`${ui.card} text-center text-slate-400`}>No applications match these filters.</div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-900 shadow-sm">
+          <table className="min-w-full divide-y divide-slate-800 text-sm">
+            <thead className="bg-slate-800/50 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
               <tr>
                 <th className="px-4 py-3">Company</th>
                 <th className="px-4 py-3">Role</th>
@@ -82,9 +82,9 @@ export function ApplicationsPage() {
                 <th className="px-4 py-3">Resume</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800">
               {applications.data.map((application) => (
-                <tr key={application.id} className="hover:bg-slate-50">
+                <tr key={application.id} className="hover:bg-slate-800/60">
                   <td className="px-4 py-3 font-medium">
                     <Link to={`/applications/${application.id}`} className="hover:underline">
                       {application.company}
@@ -96,7 +96,7 @@ export function ApplicationsPage() {
                   </td>
                   <td className="px-4 py-3">{SOURCE_LABELS[application.source]}</td>
                   <td className="px-4 py-3 whitespace-nowrap">{formatDay(application.date_applied)}</td>
-                  <td className="px-4 py-3 text-slate-500">{application.resume_version_name ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-400">{application.resume_version_name ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

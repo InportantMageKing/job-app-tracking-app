@@ -20,7 +20,7 @@ export function ApplicationDetails({ application, onEdit }: Props) {
     [
       "Posting",
       application.link ? (
-        <a href={application.link} target="_blank" rel="noopener noreferrer" className="break-all text-sky-700 hover:underline">
+        <a href={application.link} target="_blank" rel="noopener noreferrer" className="break-all text-sky-400 hover:underline">
           {application.link}
         </a>
       ) : (
@@ -40,7 +40,7 @@ export function ApplicationDetails({ application, onEdit }: Props) {
       <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
         {rows.map(([label, value]) => (
           <div key={label}>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</dt>
             <dd className="mt-0.5 text-sm">{value}</dd>
           </div>
         ))}

@@ -16,7 +16,7 @@ describe("StatusBadge", () => {
         <StatusBadge status="rejected" />
       </>,
     );
-    expect(screen.getByText("Offer")).toHaveClass("bg-emerald-100");
-    expect(screen.getByText("Rejected")).toHaveClass("bg-rose-100");
+    expect(screen.getByText("Offer")).toHaveClass("bg-emerald-500/15");
+    expect(screen.getByText("Rejected")).toHaveClass("bg-rose-500/15");
   });
 });

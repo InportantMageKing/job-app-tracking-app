@@ -136,7 +136,7 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
       </form>
 
       {showUpload && (
-        <section className="rounded-lg border border-dashed border-slate-300 p-4">
+        <section className="rounded-lg border border-dashed border-slate-700 p-4">
           <h3 className="mb-3 text-sm font-semibold">Upload a new resume version</h3>
           <ResumeUploadForm
             onUploaded={(resume) => {

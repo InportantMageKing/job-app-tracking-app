@@ -35,7 +35,7 @@ export function LoginPage() {
       <div className={`${ui.card} w-full max-w-sm space-y-5 p-6`}>
         <div>
           <h1 className={ui.heading}>Job Tracker</h1>
-          <p className="mt-1 text-sm text-slate-500">{isLogin ? "Log in to your account." : "Create an account."}</p>
+          <p className="mt-1 text-sm text-slate-400">{isLogin ? "Log in to your account." : "Create an account."}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className={ui.label}>
@@ -70,7 +70,7 @@ export function LoginPage() {
         </form>
         <button
           type="button"
-          className="text-sm text-slate-600 hover:underline"
+          className="text-sm text-slate-400 hover:underline"
           onClick={() => {
             setMode(isLogin ? "signup" : "login");
             setError(null);

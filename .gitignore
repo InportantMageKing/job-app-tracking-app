@@ -12,3 +12,6 @@ backend/media/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+
+# Browser QA artifacts
+.playwright-mcp/
