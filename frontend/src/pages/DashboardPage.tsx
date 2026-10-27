@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import { useDashboardStats } from "../api/dashboard";
+import { FunnelBranches } from "../components/dashboard/FunnelBranches";
 import { FunnelChart } from "../components/dashboard/FunnelChart";
 import { PipelineTiles } from "../components/dashboard/PipelineTiles";
 import { ResumePerformanceTable } from "../components/dashboard/ResumePerformanceTable";
@@ -46,6 +47,7 @@ export function DashboardPage() {
             </p>
           </div>
           <FunnelChart stages={data.funnel.stages} />
+          <FunnelBranches pipeline={data.pipeline} total={data.funnel.total} />
         </section>
         <section className={`${ui.card} space-y-5`}>
           <div>
