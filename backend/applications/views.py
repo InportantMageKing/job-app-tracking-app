@@ -1,10 +1,18 @@
-from rest_framework import filters
+from rest_framework import filters, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from core.viewsets import OwnedByUserViewSet
 
-from .models import Application
-from .serializers import ApplicationDetailSerializer, ApplicationSerializer
-from .services import create_application
+from .models import Application, EventType
+from .serializers import (
+    ApplicationDetailSerializer,
+    ApplicationEventSerializer,
+    ApplicationSerializer,
+    EventCreateSerializer,
+)
+from .services import ApplicationRuleError, add_note, change_status, create_application
 
 
 class ApplicationViewSet(OwnedByUserViewSet):
@@ -33,3 +41,19 @@ class ApplicationViewSet(OwnedByUserViewSet):
 
     def perform_create(self, serializer):
         serializer.instance = create_application(user=self.request.user, **serializer.validated_data)
+
+    @action(detail=True, methods=["post"], url_path="events")
+    def events(self, request, pk=None):
+        # get_object() goes through the owner-scoped queryset, so other users' IDs 404.
+        application = self.get_object()
+        serializer = EventCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            if data["event_type"] == EventType.STATUS_CHANGE:
+                event = change_status(application=application, to_status=data["to_status"], note=data["note"])
+            else:
+                event = add_note(application=application, note=data["note"])
+        except ApplicationRuleError as exc:
+            raise ValidationError({"detail": str(exc)})
+        return Response(ApplicationEventSerializer(event).data, status=status.HTTP_201_CREATED)

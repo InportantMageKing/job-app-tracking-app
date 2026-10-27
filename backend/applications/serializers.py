@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Application, ApplicationEvent
+from .models import Application, ApplicationEvent, EventType, Status
 
 
 class ApplicationEventSerializer(serializers.ModelSerializer):
@@ -48,3 +48,23 @@ class ApplicationDetailSerializer(ApplicationSerializer):
 
     class Meta(ApplicationSerializer.Meta):
         fields = ApplicationSerializer.Meta.fields + ["events"]
+
+
+class EventCreateSerializer(serializers.Serializer):
+    """Input for POST /applications/{id}/events/ — either a note or a status change."""
+
+    event_type = serializers.ChoiceField(choices=EventType.choices)
+    to_status = serializers.ChoiceField(choices=Status.choices, required=False, allow_null=True)
+    note = serializers.CharField(allow_blank=True, default="")
+
+    def validate(self, attrs):
+        to_status = attrs.get("to_status")
+        if attrs["event_type"] == EventType.STATUS_CHANGE:
+            if not to_status:
+                raise serializers.ValidationError({"to_status": "This field is required for a status change."})
+        else:
+            if to_status:
+                raise serializers.ValidationError({"to_status": "Notes cannot change status."})
+            if not attrs["note"].strip():
+                raise serializers.ValidationError({"note": "Note text is required."})
+        return attrs
