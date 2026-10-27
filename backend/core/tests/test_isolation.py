@@ -62,3 +62,16 @@ def test_cannot_attach_another_users_resume_on_update(other_client, other_user, 
     assert response.status_code == 400
     mine.refresh_from_db()
     assert mine.resume_version is None
+
+
+def test_foreign_and_missing_resume_ids_give_identical_errors(other_client, owned):
+    def error_for(pk):
+        response = other_client.post(
+            "/api/applications/",
+            {"company": "B Co", "job_title": "Engineer", "resume_version": pk},
+        )
+        assert response.status_code == 400
+        # DRF puts the submitted ID in the message; remove it so only the wording is compared.
+        return [message.replace(f'"{pk}"', '"<id>"') for message in response.json()["resume_version"]]
+
+    assert error_for(owned["resume"].pk) == error_for(999999)

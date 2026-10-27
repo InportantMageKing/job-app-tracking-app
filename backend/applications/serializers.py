@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from resumes.models import ResumeVersion
+
 from .models import Application, ApplicationEvent, EventType, Status
 
 
@@ -34,6 +36,14 @@ class ApplicationSerializer(serializers.ModelSerializer):
         # Status only changes through the events endpoint, so the event log stays complete.
         read_only_fields = ["current_status", "created_at", "updated_at"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only the caller's resumes are valid choices, so a foreign ID is indistinguishable
+        # from one that doesn't exist (same error either way).
+        request = self.context.get("request")
+        if request is not None and "resume_version" in self.fields:
+            self.fields["resume_version"].queryset = ResumeVersion.objects.filter(user=request.user)
+
     def get_resume_version_name(self, obj):
         return obj.resume_version.name if obj.resume_version else None
 
@@ -44,11 +54,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
             setattr(instance, field, value)
         instance.save(update_fields=[*validated_data, "updated_at"])
         return instance
-
-    def validate_resume_version(self, value):
-        if value is not None and value.user_id != self.context["request"].user.id:
-            raise serializers.ValidationError("Resume version not found.")
-        return value
 
 
 class ApplicationDetailSerializer(ApplicationSerializer):
