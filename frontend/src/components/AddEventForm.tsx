@@ -59,8 +59,8 @@ export function AddEventForm({ currentStatus, onSubmit }: Props) {
       type="button"
       aria-pressed={mode === value}
       onClick={() => switchMode(value)}
-      className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium ${
-        mode === value ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800"
+      className={`flex-1 rounded-sm px-3 py-1.5 font-display text-sm font-semibold uppercase tracking-[0.1em] ${
+        mode === value ? "bg-rule text-chalk" : "text-fog hover:text-chalk"
       }`}
     >
       {label}
@@ -69,14 +69,14 @@ export function AddEventForm({ currentStatus, onSubmit }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex gap-1 rounded-lg border border-slate-800 p-1">
+      <div className="flex gap-1 rounded border border-rule p-1">
         {modeButton("note", "Add note")}
         {modeButton("status_change", "Change status")}
       </div>
 
       {mode === "status_change" && (
-        <label className={ui.label}>
-          New status
+        <label className="block">
+          <span className={ui.label}>New status</span>
           <select
             className={ui.input}
             value={toStatus}
@@ -92,8 +92,8 @@ export function AddEventForm({ currentStatus, onSubmit }: Props) {
         </label>
       )}
 
-      <label className={ui.label}>
-        {mode === "note" ? "Note" : "Note (optional)"}
+      <label className="block">
+        <span className={ui.label}>{mode === "note" ? "Note" : "Note (optional)"}</span>
         <textarea
           className={ui.input}
           rows={3}

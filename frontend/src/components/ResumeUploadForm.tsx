@@ -40,8 +40,8 @@ export function ResumeUploadForm({ onUploaded, onCancel }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <label className={ui.label}>
-        Name
+      <label className="block">
+        <span className={ui.label}>Name</span>
         <input
           className={ui.input}
           placeholder="e.g. Backend v2"
@@ -49,8 +49,8 @@ export function ResumeUploadForm({ onUploaded, onCancel }: Props) {
           onChange={(event) => setName(event.target.value)}
         />
       </label>
-      <label className={ui.label}>
-        Description
+      <label className="block">
+        <span className={ui.label}>Description</span>
         <textarea
           className={ui.input}
           rows={2}
@@ -59,13 +59,13 @@ export function ResumeUploadForm({ onUploaded, onCancel }: Props) {
           onChange={(event) => setDescription(event.target.value)}
         />
       </label>
-      <label className={ui.label}>
-        File (PDF, DOC, or DOCX, up to 5 MB)
+      <label className="block">
+        <span className={ui.label}>File (PDF, DOC, or DOCX, up to 5 MB)</span>
         <input
           ref={fileInput}
           type="file"
           accept={RESUME_EXTENSIONS.join(",")}
-          className="mt-1 block w-full text-sm"
+          className="mt-1 block w-full text-sm text-fog file:mr-3 file:rounded file:border file:border-rule file:bg-ink file:px-3 file:py-1.5 file:font-display file:text-xs file:font-semibold file:uppercase file:tracking-[0.1em] file:text-chalk hover:file:border-fog"
           onChange={(event) => setFile(event.target.files?.[0] ?? null)}
         />
       </label>

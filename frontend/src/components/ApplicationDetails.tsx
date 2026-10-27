@@ -12,15 +12,15 @@ interface Props {
 export function ApplicationDetails({ application, onEdit }: Props) {
   const rows: [string, ReactNode][] = [
     ["Source", SOURCE_LABELS[application.source]],
-    ["Date applied", formatDay(application.date_applied)],
+    ["Date applied", <span className={ui.data}>{formatDay(application.date_applied)}</span>],
     ["Location", application.location || "—"],
-    ["Salary range", application.salary_range || "—"],
+    ["Salary range", application.salary_range ? <span className={ui.data}>{application.salary_range}</span> : "—"],
     ["Contact person", application.contact_person || "—"],
     ["Resume version", application.resume_version_name ?? "—"],
     [
       "Posting",
       application.link ? (
-        <a href={application.link} target="_blank" rel="noopener noreferrer" className="break-all text-sky-400 hover:underline">
+        <a href={application.link} target="_blank" rel="noopener noreferrer" className="break-all text-signal hover:underline">
           {application.link}
         </a>
       ) : (
@@ -32,16 +32,16 @@ export function ApplicationDetails({ application, onEdit }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">Details</h2>
+        <h2 className={ui.subheading}>Details</h2>
         <button type="button" className={ui.secondary} onClick={onEdit}>
           Edit details
         </button>
       </div>
-      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+      <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         {rows.map(([label, value]) => (
           <div key={label}>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</dt>
-            <dd className="mt-0.5 text-sm">{value}</dd>
+            <dt className={ui.label}>{label}</dt>
+            <dd className="mt-1 text-sm text-chalk">{value}</dd>
           </div>
         ))}
       </dl>

@@ -10,7 +10,7 @@ import { ui } from "../components/ui";
 export function DashboardPage() {
   const stats = useDashboardStats();
 
-  if (stats.isPending) return <p className="text-slate-400">Loading…</p>;
+  if (stats.isPending) return <p className={ui.muted}>Loading…</p>;
   if (stats.isError) {
     return (
       <p role="alert" className={ui.error}>
@@ -25,7 +25,7 @@ export function DashboardPage() {
     return (
       <div className={`${ui.card} space-y-3 text-center`}>
         <h1 className={ui.heading}>No applications yet</h1>
-        <p className="text-slate-400">Add your first application to start tracking your search.</p>
+        <p className={ui.muted}>Add your first application to start tracking your search.</p>
         <Link to="/applications/new" className={ui.primary}>
           New application
         </Link>
@@ -38,25 +38,25 @@ export function DashboardPage() {
       <h1 className={ui.heading}>Dashboard</h1>
       <PipelineTiles pipeline={data.pipeline} />
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className={`${ui.card} space-y-3`}>
+        <section className={`${ui.card} space-y-5`}>
           <div>
-            <h2 className="font-semibold">Funnel</h2>
-            <p className="text-sm text-slate-400">
-              Share of {data.funnel.total} applications that ever reached each stage.
+            <h2 className={ui.subheading}>Funnel</h2>
+            <p className={ui.muted}>
+              Share of <span className={ui.data}>{data.funnel.total}</span> applications that ever reached each stage.
             </p>
           </div>
           <FunnelChart stages={data.funnel.stages} />
         </section>
-        <section className={`${ui.card} space-y-3`}>
+        <section className={`${ui.card} space-y-5`}>
           <div>
-            <h2 className="font-semibold">Applications per week</h2>
-            <p className="text-sm text-slate-400">Last 12 weeks, by date applied.</p>
+            <h2 className={ui.subheading}>Applications per week</h2>
+            <p className={ui.muted}>Last 12 weeks, by date applied.</p>
           </div>
           <WeeklyChart weeks={data.per_week} />
         </section>
       </div>
-      <section className={`${ui.card} space-y-3`}>
-        <h2 className="font-semibold">Resume performance</h2>
+      <section className={`${ui.card} space-y-5`}>
+        <h2 className={ui.subheading}>Resume performance</h2>
         <ResumePerformanceTable rows={data.resume_performance} />
       </section>
     </div>

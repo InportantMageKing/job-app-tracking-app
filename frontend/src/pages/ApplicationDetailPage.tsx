@@ -31,7 +31,7 @@ export function ApplicationDetailPage() {
     }
   }
 
-  if (application.isPending) return <p className="text-slate-400">Loading…</p>;
+  if (application.isPending) return <p className={ui.muted}>Loading…</p>;
   if (application.isError) {
     const notFound = application.error instanceof ApiError && application.error.status === 404;
     return (
@@ -39,7 +39,7 @@ export function ApplicationDetailPage() {
         <p role="alert" className={ui.error}>
           {notFound ? "This application doesn't exist." : application.error.message}
         </p>
-        <Link to="/applications" className="text-sm text-slate-400 hover:underline">
+        <Link to="/applications" className="font-display text-sm font-semibold uppercase tracking-[0.1em] text-fog hover:text-chalk">
           ← Back to applications
         </Link>
       </div>
@@ -50,14 +50,14 @@ export function ApplicationDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/applications" className="text-sm text-slate-400 hover:underline">
+      <Link to="/applications" className="font-display text-sm font-semibold uppercase tracking-[0.1em] text-fog hover:text-chalk">
         ← All applications
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className={ui.heading}>{data.company}</h1>
-          <p className="text-slate-400">{data.job_title}</p>
+          <p className="mt-1 text-lg text-fog">{data.job_title}</p>
         </div>
         <StatusBadge status={data.current_status} />
       </div>
@@ -80,16 +80,16 @@ export function ApplicationDetailPage() {
         </section>
 
         <section className={`${ui.card} space-y-4`}>
-          <h2 className="font-semibold">Activity</h2>
+          <h2 className={ui.subheading}>Activity</h2>
           <AddEventForm currentStatus={data.current_status} onSubmit={(event) => addEvent.mutateAsync(event)} />
           <Timeline events={data.events} />
         </section>
       </div>
 
-      <section className="flex flex-wrap items-center gap-2 border-t border-slate-800 pt-4">
+      <section className="flex flex-wrap items-center gap-2 border-t border-rule pt-4">
         {confirmingDelete ? (
           <>
-            <span className="text-sm text-slate-400">Delete this application and its whole timeline?</span>
+            <span className={ui.muted}>Delete this application and its whole timeline?</span>
             <button type="button" className={ui.danger} disabled={remove.isPending} onClick={() => void handleDelete()}>
               Delete
             </button>

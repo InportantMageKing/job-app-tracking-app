@@ -9,14 +9,14 @@ describe("StatusBadge", () => {
     expect(screen.getByText("Phone Screen")).toBeInTheDocument();
   });
 
-  it("colors an offer differently from a rejection", () => {
+  it("marks each status with its own line color", () => {
     render(
       <>
         <StatusBadge status="offer" />
         <StatusBadge status="rejected" />
       </>,
     );
-    expect(screen.getByText("Offer")).toHaveClass("bg-emerald-500/15");
-    expect(screen.getByText("Rejected")).toHaveClass("bg-rose-500/15");
+    expect(screen.getByText("Offer").querySelector("[data-line]")).toHaveClass("bg-line-offer");
+    expect(screen.getByText("Rejected").querySelector("[data-line]")).toHaveClass("bg-line-rejected");
   });
 });

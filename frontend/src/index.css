@@ -1,5 +1,39 @@
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow-condensed/500.css";
+@import "@fontsource/barlow-condensed/600.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Night palette */
+  --color-ink: #111822;     /* page background */
+  --color-panel: #18212d;   /* cards, header */
+  --color-rule: #283446;    /* borders, tracks, dividers */
+  --color-chalk: #e6eaf0;   /* primary text */
+  --color-fog: #8c97a8;     /* secondary text */
+  --color-signal: #f5c542;  /* signage yellow: primary action + active nav only */
+
+  /* One line color per status, like transit lines */
+  --color-line-applied: #8c97a8;
+  --color-line-phone_screen: #3fa9f5;
+  --color-line-interview: #b06ef0;
+  --color-line-offer: #3fcf8e;
+  --color-line-rejected: #f0525a;
+  --color-line-withdrawn: #c9a66b;
+}
 
 :root {
   color-scheme: dark;
+}
+
+body {
+  font-feature-settings: "tnum" 1;
 }

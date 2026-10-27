@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
+import { RouteGlyph } from "../components/RouteGlyph";
 import { ui } from "../components/ui";
 
 export function LoginPage() {
@@ -32,14 +33,15 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className={`${ui.card} w-full max-w-sm space-y-5 p-6`}>
-        <div>
-          <h1 className={ui.heading}>Job Tracker</h1>
-          <p className="mt-1 text-sm text-slate-400">{isLogin ? "Log in to your account." : "Create an account."}</p>
+      <div className={`${ui.card} w-full max-w-sm space-y-6 p-6`}>
+        <div className="flex flex-col items-center text-center">
+          <RouteGlyph large />
+          <h1 className={`${ui.heading} mt-4`}>Job Tracker</h1>
+          <p className={`${ui.muted} mt-1`}>{isLogin ? "Log in to your account." : "Create an account."}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label className={ui.label}>
-            Username
+          <label className="block">
+            <span className={ui.label}>Username</span>
             <input
               className={ui.input}
               autoComplete="username"
@@ -48,8 +50,8 @@ export function LoginPage() {
               onChange={(event) => setForm({ ...form, username: event.target.value })}
             />
           </label>
-          <label className={ui.label}>
-            Password
+          <label className="block">
+            <span className={ui.label}>Password</span>
             <input
               className={ui.input}
               type="password"
@@ -70,7 +72,7 @@ export function LoginPage() {
         </form>
         <button
           type="button"
-          className="text-sm text-slate-400 hover:underline"
+          className="w-full text-center text-sm text-fog hover:text-chalk hover:underline"
           onClick={() => {
             setMode(isLogin ? "signup" : "login");
             setError(null);

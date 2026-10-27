@@ -63,8 +63,8 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
   }
 
   const textField = (key: "company" | "job_title" | "location" | "salary_range" | "contact_person", label: string, required = false) => (
-    <label className={ui.label}>
-      {label}
+    <label className="block">
+      <span className={ui.label}>{label}</span>
       <input
         className={ui.input}
         required={required}
@@ -80,8 +80,8 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
       <form id={formId} onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
         {textField("company", "Company", true)}
         {textField("job_title", "Job title", true)}
-        <label className={ui.label}>
-          Source
+        <label className="block">
+          <span className={ui.label}>Source</span>
           <select
             className={ui.input}
             value={values.source}
@@ -94,8 +94,8 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
             ))}
           </select>
         </label>
-        <label className={ui.label}>
-          Date applied
+        <label className="block">
+          <span className={ui.label}>Date applied</span>
           <input
             type="date"
             className={ui.input}
@@ -104,8 +104,8 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
             onChange={(event) => set("date_applied", event.target.value)}
           />
         </label>
-        <label className={`${ui.label} sm:col-span-2`}>
-          Link to posting
+        <label className="block sm:col-span-2">
+          <span className={ui.label}>Link to posting</span>
           <input
             type="url"
             className={ui.input}
@@ -117,8 +117,8 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
         {textField("location", "Location")}
         {textField("salary_range", "Salary range")}
         {textField("contact_person", "Contact person")}
-        <label className={ui.label}>
-          Resume version
+        <label className="block">
+          <span className={ui.label}>Resume version</span>
           <select
             className={ui.input}
             value={values.resume_version === null ? "" : String(values.resume_version)}
@@ -136,8 +136,8 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
       </form>
 
       {showUpload && (
-        <section className="rounded-lg border border-dashed border-slate-700 p-4">
-          <h3 className="mb-3 text-sm font-semibold">Upload a new resume version</h3>
+        <section className="rounded-md border border-dashed border-rule p-4">
+          <h3 className="mb-3 font-display text-sm font-semibold uppercase tracking-[0.12em] text-chalk">Upload a new resume version</h3>
           <ResumeUploadForm
             onUploaded={(resume) => {
               set("resume_version", resume.id);

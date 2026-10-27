@@ -57,17 +57,17 @@ export function ApplicationsPage() {
       </div>
 
       {applications.isPending ? (
-        <p className="text-slate-400">Loading…</p>
+        <p className={ui.muted}>Loading…</p>
       ) : applications.isError ? (
         <p role="alert" className={ui.error}>
           {applications.error.message}
         </p>
       ) : applications.data.length === 0 ? (
-        <div className={`${ui.card} text-center text-slate-400`}>No applications match these filters.</div>
+        <div className={`${ui.card} text-center text-fog`}>No applications match these filters.</div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-900 shadow-sm">
-          <table className="min-w-full divide-y divide-slate-800 text-sm">
-            <thead className="bg-slate-800/50 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <div className="overflow-x-auto rounded-md border border-rule bg-ink">
+          <table className="min-w-full text-sm">
+            <thead className="border-b border-rule text-left font-display text-xs font-semibold uppercase tracking-[0.12em] text-fog">
               <tr>
                 <th className="px-4 py-3">Company</th>
                 <th className="px-4 py-3">Role</th>
@@ -77,21 +77,21 @@ export function ApplicationsPage() {
                 <th className="px-4 py-3">Resume</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-rule">
               {applications.data.map((application) => (
-                <tr key={application.id} className="hover:bg-slate-800/60">
-                  <td className="px-4 py-3 font-medium">
-                    <Link to={`/applications/${application.id}`} className="hover:underline">
+                <tr key={application.id} className="hover:bg-panel">
+                  <td className="px-4 py-3">
+                    <Link to={`/applications/${application.id}`} className="font-medium text-chalk hover:text-signal">
                       {application.company}
                     </Link>
                   </td>
-                  <td className="px-4 py-3">{application.job_title}</td>
+                  <td className="px-4 py-3 text-chalk">{application.job_title}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={application.current_status} />
                   </td>
-                  <td className="px-4 py-3">{SOURCE_LABELS[application.source]}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">{formatDay(application.date_applied)}</td>
-                  <td className="px-4 py-3 text-slate-400">{application.resume_version_name ?? "—"}</td>
+                  <td className="px-4 py-3 text-fog">{SOURCE_LABELS[application.source]}</td>
+                  <td className={`whitespace-nowrap px-4 py-3 text-chalk ${ui.data}`}>{formatDay(application.date_applied)}</td>
+                  <td className="px-4 py-3 text-fog">{application.resume_version_name ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

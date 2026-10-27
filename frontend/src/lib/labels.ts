@@ -11,13 +11,13 @@ export const STATUS_LABELS: Record<Status, string> = {
   withdrawn: "Withdrawn",
 };
 
-export const STATUS_COLORS: Record<Status, string> = {
-  applied: "bg-slate-800 text-slate-200",
-  phone_screen: "bg-sky-500/15 text-sky-300",
-  interview: "bg-indigo-500/15 text-indigo-300",
-  offer: "bg-emerald-500/15 text-emerald-300",
-  rejected: "bg-rose-500/15 text-rose-300",
-  withdrawn: "bg-amber-500/15 text-amber-300",
+export const STATUS_LINE: Record<Status, string> = {
+  applied: "bg-line-applied",
+  phone_screen: "bg-line-phone_screen",
+  interview: "bg-line-interview",
+  offer: "bg-line-offer",
+  rejected: "bg-line-rejected",
+  withdrawn: "bg-line-withdrawn",
 };
 
 export const SOURCES: Source[] = ["linkedin", "indeed", "company_site", "referral", "other"];
