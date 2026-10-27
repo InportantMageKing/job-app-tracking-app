@@ -1,2 +1,10 @@
 # Private working notes
 notes/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local uploads (dev media lives in a Docker volume)
+backend/media/
