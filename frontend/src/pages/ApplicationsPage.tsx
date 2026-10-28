@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { useApplications, type ApplicationFilters } from "../api/applications";
 import type { Source, Status } from "../api/types";
@@ -10,6 +10,7 @@ import { formatDay, SOURCE_LABELS, SOURCES, STATUS_LABELS, STATUSES } from "../l
 export function ApplicationsPage() {
   const [filters, setFilters] = useState<ApplicationFilters>({ status: "", source: "", search: "" });
   const applications = useApplications(filters);
+  const navigate = useNavigate();
 
   function update(patch: ApplicationFilters) {
     setFilters((previous) => ({ ...previous, ...patch }));
@@ -79,9 +80,17 @@ export function ApplicationsPage() {
             </thead>
             <tbody className="divide-y divide-rule">
               {applications.data.map((application) => (
-                <tr key={application.id} className="hover:bg-panel">
+                <tr
+                  key={application.id}
+                  className="group cursor-pointer hover:bg-panel"
+                  onClick={(event) => {
+                    // The company link handles its own click; the rest of the row navigates for mouse users.
+                    if ((event.target as HTMLElement).closest("a")) return;
+                    void navigate(`/applications/${application.id}`);
+                  }}
+                >
                   <td className="px-4 py-3">
-                    <Link to={`/applications/${application.id}`} className="font-medium text-chalk hover:text-signal">
+                    <Link to={`/applications/${application.id}`} className="font-medium text-chalk group-hover:text-signal">
                       {application.company}
                     </Link>
                   </td>
