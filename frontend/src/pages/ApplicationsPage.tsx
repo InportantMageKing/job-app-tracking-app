@@ -91,7 +91,16 @@ export function ApplicationsPage() {
         <div className={`${ui.card} text-center text-fog`}>No applications match these filters.</div>
       ) : (
         <div className="overflow-x-auto rounded-md border border-rule bg-ink">
-          <table className="min-w-full text-sm">
+          <table className="w-full min-w-[56rem] table-fixed text-sm">
+            {/* Fixed widths so columns don't jump when filters change which rows are shown. */}
+            <colgroup>
+              <col className="w-[20%]" />
+              <col className="w-[24%]" />
+              <col className="w-[15%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[17%]" />
+            </colgroup>
             <thead className="border-b border-rule text-left font-display text-xs font-semibold uppercase tracking-[0.12em] text-fog">
               <tr>
                 <th className="px-4 py-3">Company</th>
@@ -102,7 +111,7 @@ export function ApplicationsPage() {
                 <th className="px-4 py-3">Resume</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-rule">
+            <tbody className="divide-y divide-rule break-words">
               {rows.map((application) => (
                 <tr
                   key={application.id}
