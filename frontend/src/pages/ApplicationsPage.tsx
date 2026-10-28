@@ -4,13 +4,27 @@ import { Link, useNavigate } from "react-router";
 import { useApplications, type ApplicationFilters } from "../api/applications";
 import type { Source, Status } from "../api/types";
 import { StatusBadge } from "../components/StatusBadge";
+import { Toggle } from "../components/Toggle";
 import { ui } from "../components/ui";
-import { formatDay, SOURCE_LABELS, SOURCES, STATUS_LABELS, STATUSES } from "../lib/labels";
+import { formatDay, monthAgoLocal, SOURCE_LABELS, SOURCES, STATUS_LABELS, STATUSES } from "../lib/labels";
+
+const CLOSED_STATUSES: Status[] = ["rejected", "withdrawn"];
 
 export function ApplicationsPage() {
   const [filters, setFilters] = useState<ApplicationFilters>({ status: "", source: "", search: "" });
   const applications = useApplications(filters);
+  const [hideClosed, setHideClosed] = useState(false);
+  const [hideOlder, setHideOlder] = useState(false);
   const navigate = useNavigate();
+
+  // Picking a status by name always shows it, so the toggle only applies to "All statuses".
+  const hidingClosed = hideClosed && filters.status === "";
+  const cutoff = monthAgoLocal();
+  const rows = (applications.data ?? []).filter(
+    (application) =>
+      (!hidingClosed || !CLOSED_STATUSES.includes(application.current_status)) &&
+      (!hideOlder || application.date_applied >= cutoff),
+  );
 
   function update(patch: ApplicationFilters) {
     setFilters((previous) => ({ ...previous, ...patch }));
@@ -57,13 +71,23 @@ export function ApplicationsPage() {
         </select>
       </div>
 
+      <div className="flex flex-wrap gap-x-8 gap-y-3">
+        <Toggle
+          label="Hide rejected and withdrawn"
+          checked={hidingClosed}
+          disabled={filters.status !== ""}
+          onChange={setHideClosed}
+        />
+        <Toggle label="Hide applied over a month ago" checked={hideOlder} onChange={setHideOlder} />
+      </div>
+
       {applications.isPending ? (
         <p className={ui.muted}>Loading…</p>
       ) : applications.isError ? (
         <p role="alert" className={ui.error}>
           {applications.error.message}
         </p>
-      ) : applications.data.length === 0 ? (
+      ) : rows.length === 0 ? (
         <div className={`${ui.card} text-center text-fog`}>No applications match these filters.</div>
       ) : (
         <div className="overflow-x-auto rounded-md border border-rule bg-ink">
@@ -79,7 +103,7 @@ export function ApplicationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-rule">
-              {applications.data.map((application) => (
+              {rows.map((application) => (
                 <tr
                   key={application.id}
                   className="group cursor-pointer hover:bg-panel"

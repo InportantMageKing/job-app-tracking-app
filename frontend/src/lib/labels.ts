@@ -58,3 +58,10 @@ export function formatDateTime(iso: string): string {
 export function todayLocal(): string {
   return new Date().toLocaleDateString("en-CA");
 }
+
+/** The local calendar date one month before today, as YYYY-MM-DD. */
+export function monthAgoLocal(): string {
+  const date = new Date();
+  date.setMonth(date.getMonth() - 1);
+  return date.toLocaleDateString("en-CA");
+}
