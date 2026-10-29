@@ -8,6 +8,8 @@ import { ui } from "./ui";
 
 const UPLOAD_NEW = "__upload_new__";
 
+type TextKey = "company" | "job_title" | "location" | "salary_range" | "contact_person";
+
 function emptyApplication(): ApplicationInput {
   return {
     company: "",
@@ -62,7 +64,7 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
     }
   }
 
-  const textField = (key: "company" | "job_title" | "location" | "salary_range" | "contact_person", label: string, required = false) => (
+  const textField = (key: TextKey, label: string, required = false) => (
     <label className="block">
       <span className={ui.label}>{label}</span>
       <input
@@ -100,6 +102,7 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
             type="date"
             className={ui.input}
             required
+            max={todayLocal()}
             value={values.date_applied}
             onChange={(event) => set("date_applied", event.target.value)}
           />
@@ -136,7 +139,7 @@ export function ApplicationForm({ initial, submitLabel, onSubmit, onCancel }: Pr
       </form>
 
       {showUpload && (
-        <section className="rounded-md border border-dashed border-rule p-4">
+        <section className={ui.inset}>
           <h3 className="mb-3 font-display text-sm font-semibold uppercase tracking-[0.12em] text-chalk">Upload a new resume version</h3>
           <ResumeUploadForm
             onUploaded={(resume) => {

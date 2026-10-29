@@ -29,7 +29,8 @@ export function ResumePerformanceTable({ rows }: { rows: ResumePerformance[] }) 
         <tbody className="divide-y divide-rule">
           {rows.map((row) => (
             <tr key={row.resume_version_id ?? "none"}>
-              <td className="py-2.5 pr-4 font-medium text-chalk">
+              {/* Styled apart so a resume literally named "No resume" can't be mistaken for this row. */}
+              <td className={`py-2.5 pr-4 font-medium ${row.resume_version_id === null ? "italic text-fog" : "text-chalk"}`}>
                 {row.resume_version_id === null ? "No resume" : row.name}
               </td>
               <td className={`py-2.5 pr-4 text-chalk ${ui.data}`}>{row.total}</td>

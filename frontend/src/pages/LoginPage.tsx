@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router";
+import { Navigate } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
 import { RouteGlyph } from "../components/RouteGlyph";
@@ -7,7 +7,6 @@ import { ui } from "../components/ui";
 
 export function LoginPage() {
   const { username, login, signup } = useAuth();
-  const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -18,8 +17,8 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
+      // On success the username is set and the <Navigate> below redirects; no navigate() here.
       await (mode === "login" ? login : signup)(form.username, form.password);
-      navigate("/", { replace: true });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Something went wrong.");
     } finally {

@@ -3,14 +3,31 @@
 const TOKEN_KEY = "jobtracker.token";
 const USERNAME_KEY = "jobtracker.username";
 
-/** Flatten DRF error bodies ({"field": ["msg"]} or {"detail": "msg"}) into one readable line. */
+/** Flatten DRF error bodies into one readable line.
+ *
+ * Handles {"field": ["msg"]}, {"detail": "msg"}, and nested shapes such as
+ * {"field": [{"inner": ["msg"]}]}, so nothing renders as "[object Object]".
+ */
 export function errorMessage(body: unknown): string | null {
-  if (!body || typeof body !== "object") return null;
-  const parts = Object.entries(body as Record<string, unknown>).map(([key, value]) => {
-    const text = Array.isArray(value) ? value.join(" ") : String(value);
-    return key === "detail" || key === "non_field_errors" ? text : `${key}: ${text}`;
-  });
-  return parts.length > 0 ? parts.join(" ") : null;
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+  const text = flattenErrors(body);
+  return text || null;
+}
+
+function flattenErrors(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (Array.isArray(value)) return value.map(flattenErrors).filter(Boolean).join(" ");
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([key, inner]) => {
+        const text = flattenErrors(inner);
+        if (!text) return "";
+        return key === "detail" || key === "non_field_errors" ? text : `${key}: ${text}`;
+      })
+      .filter(Boolean)
+      .join(" ");
+  }
+  return String(value);
 }
 
 export class ApiError extends Error {

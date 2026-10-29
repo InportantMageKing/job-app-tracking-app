@@ -6,13 +6,17 @@ import type { Source, Status } from "../api/types";
 import { StatusBadge } from "../components/StatusBadge";
 import { Toggle } from "../components/Toggle";
 import { ui } from "../components/ui";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { formatDay, monthAgoLocal, SOURCE_LABELS, SOURCES, STATUS_LABELS, STATUSES } from "../lib/labels";
 
 const CLOSED_STATUSES: Status[] = ["rejected", "withdrawn"];
+const SEARCH_DELAY_MS = 300;
 
 export function ApplicationsPage() {
   const [filters, setFilters] = useState<ApplicationFilters>({ status: "", source: "", search: "" });
-  const applications = useApplications(filters);
+  // Wait for a pause in typing before searching, instead of one request per keystroke.
+  const search = useDebouncedValue(filters.search, SEARCH_DELAY_MS);
+  const applications = useApplications({ ...filters, search });
   const [hideClosed, setHideClosed] = useState(false);
   const [hideOlder, setHideOlder] = useState(false);
   const navigate = useNavigate();
@@ -25,6 +29,8 @@ export function ApplicationsPage() {
       (!hidingClosed || !CLOSED_STATUSES.includes(application.current_status)) &&
       (!hideOlder || application.date_applied >= cutoff),
   );
+
+  const narrowed = Boolean(filters.status || filters.source || search || hidingClosed || hideOlder);
 
   function update(patch: ApplicationFilters) {
     setFilters((previous) => ({ ...previous, ...patch }));
@@ -88,7 +94,11 @@ export function ApplicationsPage() {
           {applications.error.message}
         </p>
       ) : rows.length === 0 ? (
-        <div className={`${ui.card} text-center text-fog`}>No applications match these filters.</div>
+        <div className={`${ui.card} text-center text-fog`}>
+          {narrowed
+            ? "No applications match these filters."
+            : "No applications yet. Use New application to add your first one."}
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-md border border-rule bg-ink">
           <table className="w-full min-w-[56rem] table-fixed text-sm">

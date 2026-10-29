@@ -52,6 +52,23 @@ describe("apiFetch", () => {
     expect(error.message).toBe("company: This field is required.");
   });
 
+  it("keeps the browser's multipart Content-Type for FormData bodies", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(201, {}));
+    await apiFetch("/resume-versions/", { method: "POST", body: new FormData() });
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(headers.has("Content-Type")).toBe(false);
+  });
+
+  it("does not end a session on 401 when there was no token", async () => {
+    tokenStore.clear();
+    const handler = vi.fn();
+    setUnauthorizedHandler(handler);
+    fetchMock.mockResolvedValue(jsonResponse(401, { detail: "Invalid username or password." }));
+
+    await expect(apiFetch("/auth/login/", { method: "POST", body: "{}" })).rejects.toBeInstanceOf(ApiError);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it("clears the session and calls the unauthorized handler on 401", async () => {
     tokenStore.set("expired", "atlas");
     const handler = vi.fn();
@@ -69,6 +86,18 @@ describe("errorMessage", () => {
     expect(errorMessage({ detail: "Not found." })).toBe("Not found.");
     expect(errorMessage({ non_field_errors: ["Invalid username or password."] })).toBe(
       "Invalid username or password.",
+    );
+  });
+
+  it("reads detail whether it is a string or a list", () => {
+    expect(errorMessage({ detail: ["Application is already in status 'applied'."] })).toBe(
+      "Application is already in status 'applied'.",
+    );
+  });
+
+  it("flattens nested errors instead of printing [object Object]", () => {
+    expect(errorMessage({ events: [{ note: ["Note text is required."] }] })).toBe(
+      "events: note: Note text is required.",
     );
   });
 

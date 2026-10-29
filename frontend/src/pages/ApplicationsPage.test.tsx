@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { ApplicationFilters } from "../api/applications";
 import type { Application, Status } from "../api/types";
 import { ApplicationsPage } from "./ApplicationsPage";
 
@@ -31,16 +32,25 @@ function application(id: number, company: string, current_status: Status, date_a
   };
 }
 
-const data = [
+const allApplications = [
   application(1, "Open Co", "interview"),
   application(2, "Rejected Co", "rejected"),
   application(3, "Withdrawn Co", "withdrawn"),
   application(4, "Old Co", "applied", daysAgo(45)),
 ];
 
+// The mock returns `data` and records the filters each render asked for.
+let data: Application[] = allApplications;
+const useApplications = vi.fn((_filters: ApplicationFilters) => ({ isPending: false, isError: false, data }));
+
 vi.mock("../api/applications", () => ({
-  useApplications: () => ({ isPending: false, isError: false, data }),
+  useApplications: (filters: ApplicationFilters) => useApplications(filters),
 }));
+
+beforeEach(() => {
+  data = allApplications;
+  useApplications.mockClear();
+});
 
 function renderPage() {
   render(
@@ -77,5 +87,38 @@ describe("ApplicationsPage toggles", () => {
 
     expect(screen.queryByText("Old Co")).not.toBeInTheDocument();
     expect(screen.getByText("Open Co")).toBeInTheDocument();
+  });
+});
+
+describe("ApplicationsPage empty states", () => {
+  it("invites you to add one when there are no applications at all", () => {
+    data = [];
+    renderPage();
+    expect(screen.getByText("No applications yet. Use New application to add your first one.")).toBeInTheDocument();
+  });
+
+  it("says nothing matches when filters hide every row", async () => {
+    data = [application(2, "Rejected Co", "rejected")];
+    renderPage();
+    await userEvent.click(screen.getByRole("switch", { name: "Hide rejected and withdrawn" }));
+    expect(screen.getByText("No applications match these filters.")).toBeInTheDocument();
+  });
+});
+
+describe("ApplicationsPage search", () => {
+  it("waits for a pause in typing before searching", () => {
+    vi.useFakeTimers();
+    try {
+      renderPage();
+      fireEvent.change(screen.getByLabelText("Search company or role"), { target: { value: "acme" } });
+      expect(useApplications).not.toHaveBeenLastCalledWith(expect.objectContaining({ search: "acme" }));
+
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(useApplications).toHaveBeenLastCalledWith(expect.objectContaining({ search: "acme" }));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

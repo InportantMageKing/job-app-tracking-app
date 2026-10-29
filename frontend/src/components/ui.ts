@@ -10,6 +10,7 @@ export const ui = {
   danger:
     "inline-flex items-center justify-center gap-1.5 rounded bg-line-rejected px-4 py-2 font-display text-sm font-bold uppercase tracking-[0.1em] text-ink hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-line-rejected disabled:opacity-50",
   card: "rounded-md border border-rule bg-panel p-5",
+  inset: "rounded-md border border-dashed border-rule p-4",
   error: "text-sm text-line-rejected",
   heading: "font-display text-3xl font-bold uppercase tracking-[0.06em] text-chalk",
   subheading: "font-display text-base font-semibold uppercase tracking-[0.12em] text-chalk",
