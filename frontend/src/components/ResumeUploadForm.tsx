@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 
 import { useUploadResume } from "../api/resumes";
 import type { ResumeVersion } from "../api/types";
-import { RESUME_EXTENSIONS, validateResumeFile } from "../lib/resumeFile";
+import { RESUME_EXTENSIONS, RESUME_MAX_LABEL, validateResumeFile } from "../lib/resumeFile";
 import { ui } from "./ui";
 
 interface Props {
@@ -60,7 +60,7 @@ export function ResumeUploadForm({ onUploaded, onCancel }: Props) {
         />
       </label>
       <label className="block">
-        <span className={ui.label}>File (PDF, DOC, or DOCX, up to 5 MB)</span>
+        <span className={ui.label}>File (PDF, DOC, or DOCX, up to {RESUME_MAX_LABEL})</span>
         <input
           ref={fileInput}
           type="file"

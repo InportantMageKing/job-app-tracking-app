@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 
+from accounts.serializers import SignupSerializer
 from conftest import make_token_client
 from core.factories import TEST_PASSWORD
 
@@ -58,3 +59,34 @@ def test_logout_deletes_the_token(user):
 
 def test_logout_requires_a_token(api_client):
     assert api_client.post(LOGOUT).status_code == 401
+
+
+def test_signup_race_on_the_same_username_returns_400_not_500(api_client, user, monkeypatch):
+    # Simulate a concurrent signup that passed the serializer check: only the database catches it.
+    monkeypatch.setattr(SignupSerializer, "validate_username", lambda self, value: value)
+    response = api_client.post(SIGNUP, {"username": user.username.upper(), "password": "long-enough-pass"})
+    assert response.status_code == 400
+    assert response.json() == {"username": ["That username is taken."]}
+
+
+def test_login_is_rate_limited(api_client, user):
+    statuses = [
+        api_client.post(LOGIN, {"username": user.username, "password": "wrong-password"}).status_code
+        for _ in range(11)
+    ]
+    assert statuses[:10] == [400] * 10
+    assert statuses[10] == 429
+
+
+def test_signup_is_rate_limited(api_client):
+    statuses = [
+        api_client.post(SIGNUP, {"username": f"rate{n}", "password": "long-enough-pass"}).status_code
+        for n in range(11)
+    ]
+    assert statuses[:10] == [201] * 10
+    assert statuses[10] == 429
+
+
+def test_logout_without_a_token_object_does_not_crash(api_client, user):
+    api_client.force_authenticate(user=user)  # authenticated, but request.auth is None
+    assert api_client.post(LOGOUT).status_code == 204

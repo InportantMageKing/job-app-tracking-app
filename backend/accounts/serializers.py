@@ -1,9 +1,12 @@
 from django.contrib.auth import authenticate, get_user_model, password_validation
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
 User = get_user_model()
+
+USERNAME_TAKEN = "That username is taken."
 
 
 class SignupSerializer(serializers.Serializer):
@@ -12,7 +15,7 @@ class SignupSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():
-            raise serializers.ValidationError("That username is taken.")
+            raise serializers.ValidationError(USERNAME_TAKEN)
         return value
 
     def validate(self, attrs):
@@ -23,7 +26,15 @@ class SignupSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return User.objects.create_user(username=validated_data["username"], password=validated_data["password"])
+        # validate_username can race with a concurrent signup. The database's case-insensitive
+        # unique index is the real guard, so report its violation the same way.
+        try:
+            with transaction.atomic():
+                return User.objects.create_user(
+                    username=validated_data["username"], password=validated_data["password"]
+                )
+        except IntegrityError:
+            raise serializers.ValidationError({"username": [USERNAME_TAKEN]})
 
 
 class LoginSerializer(serializers.Serializer):

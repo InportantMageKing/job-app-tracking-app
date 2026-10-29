@@ -11,10 +11,11 @@ from django.utils import timezone
 from applications.models import Application, ApplicationEvent, Source, Status
 from applications.services import add_note, change_status
 from core.factories import ApplicationFactory, ResumeVersionFactory
-from resumes.models import ResumeVersion
 
 SEED_USERS = ["tester1", "tester2"]
 SEED_PASSWORD = "testing-pass-123"
+# A Django admin login. Not "admin", so a reseed never deletes an admin someone made by hand.
+SEED_ADMIN = "qa-admin"
 HISTORY_DAYS = 60
 
 RESUME_VERSIONS = [
@@ -46,7 +47,7 @@ NOTES = [
 
 
 class Command(BaseCommand):
-    help = "Delete and recreate the QA users tester1 and tester2 with realistic, backdated data."
+    help = "Delete and recreate the QA users tester1 and tester2 with realistic, backdated data, plus a qa-admin superuser."
 
     def add_arguments(self, parser):
         parser.add_argument("--applications", type=int, default=40, help="Applications per user (default 40).")
@@ -58,12 +59,17 @@ class Command(BaseCommand):
         now = timezone.now()
 
         for username in SEED_USERS:
-            self._delete_user(username)
+            # One transaction per user, so a failure never leaves a user deleted but not recreated.
             with transaction.atomic():
+                self._delete_user(username)
                 user = get_user_model().objects.create_user(username=username, password=SEED_PASSWORD)
                 resumes = [ResumeVersionFactory(user=user, name=name, description=desc) for name, desc in RESUME_VERSIONS]
                 for _ in range(options["applications"]):
                     self._create_application(user, resumes, rng, now)
+
+        with transaction.atomic():
+            self._delete_user(SEED_ADMIN)
+            get_user_model().objects.create_superuser(username=SEED_ADMIN, password=SEED_PASSWORD)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -72,15 +78,13 @@ class Command(BaseCommand):
         )
         for username in SEED_USERS:
             self.stdout.write(f"  login: {username} / {SEED_PASSWORD}")
+        self.stdout.write(f"  admin: {SEED_ADMIN} / {SEED_PASSWORD} at /admin/")
 
     def _delete_user(self, username):
         user = get_user_model().objects.filter(username=username).first()
-        if user is None:
-            return
-        # Row deletes don't remove files from storage, so clean those up first.
-        for resume in ResumeVersion.objects.filter(user=user):
-            resume.file.delete(save=False)
-        user.delete()
+        if user is not None:
+            # Cascades to applications and resumes; the resumes signal removes their files on commit.
+            user.delete()
 
     def _create_application(self, user, resumes, rng, now):
         applied_at = now - timedelta(days=rng.randint(0, HISTORY_DAYS), hours=rng.randint(0, 23))
@@ -102,6 +106,8 @@ class Command(BaseCommand):
                 # Never earlier than the application itself, even for very recent ones.
                 self._backdate(note, max(applied_at, moment - timedelta(hours=rng.randint(1, 24))))
             self._backdate(change_status(application=application, to_status=status), moment)
+        # The last thing that happened to the application is when it was last updated.
+        Application.objects.filter(pk=application.pk).update(updated_at=moment)
 
     @staticmethod
     def _backdate(event, moment):

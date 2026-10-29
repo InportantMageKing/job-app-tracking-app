@@ -35,3 +35,17 @@ def test_resume_names_are_unique_per_user():
     make(bob)  # same name, different user: allowed
     with pytest.raises(IntegrityError), transaction.atomic():
         make(alice)
+
+
+@pytest.mark.django_db
+def test_resume_names_are_unique_per_user_ignoring_case():
+    owner = get_user_model().objects.create_user(username="carol", password="test-pass-123")
+
+    def make(name):
+        return ResumeVersion.objects.create(
+            user=owner, name=name, original_filename="cv.pdf", file=ContentFile(b"%PDF-1.4", name="cv.pdf")
+        )
+
+    make("Backend v1")
+    with pytest.raises(IntegrityError), transaction.atomic():
+        make("BACKEND V1")

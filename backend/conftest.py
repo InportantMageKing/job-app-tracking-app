@@ -46,3 +46,11 @@ def auth_client(user):
 @pytest.fixture
 def other_client(other_user):
     return make_token_client(other_user)
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    """Throttle counters live in the cache; reset them so tests don't rate-limit each other."""
+    from django.core.cache import cache
+
+    cache.clear()

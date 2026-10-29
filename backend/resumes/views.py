@@ -18,12 +18,6 @@ class ResumeVersionViewSet(OwnedByUserViewSet):
     def get_queryset(self):
         return super().get_queryset().annotate(application_count=Count("applications"))
 
-    def perform_destroy(self, instance):
-        storage, name = instance.file.storage, instance.file.name
-        instance.delete()
-        if name:
-            storage.delete(name)
-
     @action(detail=True, methods=["get"], url_path="file")
     def download(self, request, pk=None):
         resume = self.get_object()

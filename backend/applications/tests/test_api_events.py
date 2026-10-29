@@ -50,7 +50,7 @@ def test_change_status_without_note(auth_client, application):
 def test_change_to_current_status_is_rejected(auth_client, application):
     response = auth_client.post(events_url(application), {"event_type": "status_change", "to_status": "applied"})
     assert response.status_code == 400
-    assert "already" in str(response.json())
+    assert response.json() == {"detail": "Application is already in status 'applied'."}
     assert application.events.count() == 1
 
 

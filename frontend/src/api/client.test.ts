@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiFetch, errorMessage, setUnauthorizedHandler, tokenStore } from "./client";
+import { ApiError, apiDownload, apiFetch, errorMessage, setUnauthorizedHandler, tokenStore } from "./client";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -52,6 +52,23 @@ describe("apiFetch", () => {
     expect(error.message).toBe("company: This field is required.");
   });
 
+  it("keeps the browser's multipart Content-Type for FormData bodies", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(201, {}));
+    await apiFetch("/resume-versions/", { method: "POST", body: new FormData() });
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(headers.has("Content-Type")).toBe(false);
+  });
+
+  it("does not end a session on 401 when there was no token", async () => {
+    tokenStore.clear();
+    const handler = vi.fn();
+    setUnauthorizedHandler(handler);
+    fetchMock.mockResolvedValue(jsonResponse(401, { detail: "Invalid username or password." }));
+
+    await expect(apiFetch("/auth/login/", { method: "POST", body: "{}" })).rejects.toBeInstanceOf(ApiError);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it("clears the session and calls the unauthorized handler on 401", async () => {
     tokenStore.set("expired", "atlas");
     const handler = vi.fn();
@@ -72,8 +89,43 @@ describe("errorMessage", () => {
     );
   });
 
+  it("reads detail whether it is a string or a list", () => {
+    expect(errorMessage({ detail: ["Application is already in status 'applied'."] })).toBe(
+      "Application is already in status 'applied'.",
+    );
+  });
+
+  it("flattens nested errors instead of printing [object Object]", () => {
+    expect(errorMessage({ events: [{ note: ["Note text is required."] }] })).toBe(
+      "events: note: Note text is required.",
+    );
+  });
+
   it("returns null for bodies it can't read", () => {
     expect(errorMessage(null)).toBeNull();
     expect(errorMessage("oops")).toBeNull();
+  });
+});
+
+describe("apiDownload", () => {
+  it("keeps the blob URL alive until after the click has started the download", async () => {
+    vi.useFakeTimers();
+    const createObjectURL = vi.fn(() => "blob:resume");
+    const revokeObjectURL = vi.fn();
+    const original = { createObjectURL: URL.createObjectURL, revokeObjectURL: URL.revokeObjectURL };
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    fetchMock.mockResolvedValue(new Response("%PDF-", { status: 200 }));
+
+    await apiDownload("/resume-versions/1/file/", "resume.pdf");
+
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    vi.runAllTimers();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:resume");
+
+    click.mockRestore();
+    Object.assign(URL, original);
+    vi.useRealTimers();
   });
 });

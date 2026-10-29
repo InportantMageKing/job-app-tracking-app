@@ -38,22 +38,24 @@ def _reached(stage):
     )
 
 
-def funnel(applications):
-    """Share of applications that ever reached each pipeline stage.
-
-    Uses the event log, not current_status: an application that went
-    Interview -> Rejected still counts as having reached Interview.
-    """
-    annotated = applications.order_by().annotate(
+def _with_reached(applications):
+    """Annotate each application with reached_<stage> flags for every pipeline stage."""
+    return applications.order_by().annotate(
         **{f"reached_{stage.value}": _reached(stage) for stage in PIPELINE_STAGES}
     )
-    counts = annotated.aggregate(
-        total=Count("pk"),
+
+
+def _count_aggregates():
+    return {
+        "total": Count("pk"),
         **{
             f"n_{stage.value}": Count("pk", filter=Q(**{f"reached_{stage.value}": True}))
             for stage in PIPELINE_STAGES
         },
-    )
+    }
+
+
+def _funnel_from_counts(counts):
     total = counts["total"]
     return {
         "total": total,
@@ -67,6 +69,15 @@ def funnel(applications):
             for stage in PIPELINE_STAGES
         ],
     }
+
+
+def funnel(applications):
+    """Share of applications that ever reached each pipeline stage.
+
+    Uses the event log, not current_status: an application that went
+    Interview -> Rejected still counts as having reached Interview.
+    """
+    return _funnel_from_counts(_with_reached(applications).aggregate(**_count_aggregates()))
 
 
 def applications_per_week(applications, *, weeks=12, today=None):
@@ -94,16 +105,33 @@ def applications_per_week(applications, *, weeks=12, today=None):
     return result
 
 
+NO_RESUME_LABEL = "No resume"
+
+
 def resume_performance(user):
-    """Funnel metrics per resume version, plus a "None" row for applications without one."""
-    applications = Application.objects.filter(user=user)
+    """Funnel metrics per resume version, plus a "No resume" row for applications without one.
+
+    One grouped query covers every version, instead of one funnel query per version.
+    """
+    grouped = (
+        _with_reached(Application.objects.filter(user=user))
+        .values("resume_version")
+        .annotate(**_count_aggregates())
+    )
+    counts_by_resume = {row["resume_version"]: row for row in grouped}
+    no_applications = {key: 0 for key in _count_aggregates()}
     rows = [
-        {"resume_version_id": resume.pk, "name": resume.name, **funnel(applications.filter(resume_version=resume))}
+        {
+            "resume_version_id": resume.pk,
+            "name": resume.name,
+            **_funnel_from_counts(counts_by_resume.get(resume.pk, no_applications)),
+        }
         for resume in ResumeVersion.objects.filter(user=user).order_by("name")
     ]
-    unassigned = applications.filter(resume_version__isnull=True)
-    if unassigned.exists():
-        rows.append({"resume_version_id": None, "name": "None", **funnel(unassigned)})
+    if None in counts_by_resume:
+        rows.append(
+            {"resume_version_id": None, "name": NO_RESUME_LABEL, **_funnel_from_counts(counts_by_resume[None])}
+        )
     return rows
 
 

@@ -10,35 +10,40 @@ export function ResumesPage() {
   const resumes = useResumeVersions();
   const remove = useDeleteResume();
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Errors are kept per resume so each one shows on the card it belongs to.
+  const [errors, setErrors] = useState<Record<number, string>>({});
+
+  function setError(id: number, message: string | null) {
+    setErrors((previous) => {
+      const next = { ...previous };
+      if (message) next[id] = message;
+      else delete next[id];
+      return next;
+    });
+  }
 
   async function handleDownload(resume: ResumeVersion) {
-    setError(null);
+    setError(resume.id, null);
     try {
       await downloadResume(resume);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Download failed.");
+      setError(resume.id, caught instanceof Error ? caught.message : "Download failed.");
     }
   }
 
   async function handleDelete(id: number) {
-    setError(null);
+    setError(id, null);
     try {
       await remove.mutateAsync(id);
       setConfirmingId(null);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Delete failed.");
+      setError(id, caught instanceof Error ? caught.message : "Delete failed.");
     }
   }
 
   return (
     <div className="space-y-4">
       <h1 className={ui.heading}>Resume versions</h1>
-      {error && (
-        <p role="alert" className={ui.error}>
-          {error}
-        </p>
-      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {resumes.isPending ? (
@@ -63,8 +68,14 @@ export function ResumesPage() {
                   Used in <span className={ui.data}>{resume.application_count}</span> application{resume.application_count === 1 ? "" : "s"}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" className={ui.secondary} onClick={() => void handleDownload(resume)}>
-                    Download {resume.original_filename}
+                  <button
+                    type="button"
+                    className={`${ui.secondary} min-w-0 max-w-full`}
+                    title={resume.original_filename}
+                    onClick={() => void handleDownload(resume)}
+                  >
+                    {/* Long filenames are cut off with an ellipsis; the full name is in the tooltip. */}
+                    <span className="truncate">Download {resume.original_filename}</span>
                   </button>
                   {confirmingId === resume.id ? (
                     <>
@@ -87,6 +98,11 @@ export function ResumesPage() {
                     </button>
                   )}
                 </div>
+                {errors[resume.id] && (
+                  <p role="alert" className={ui.error}>
+                    {errors[resume.id]}
+                  </p>
+                )}
               </article>
             ))
           )}

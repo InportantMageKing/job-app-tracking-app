@@ -68,10 +68,11 @@ export function useUpdateApplication(id: number) {
   });
 }
 
-export function useApplication(id: number) {
+export function useApplication(id: number, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["application", id],
     queryFn: () => apiFetch<ApplicationDetail>(`/applications/${id}/`),
+    enabled,
   });
 }
 

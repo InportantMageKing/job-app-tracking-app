@@ -1,10 +1,14 @@
 import re
+from pathlib import Path
 
 import pytest
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import transaction
 
 from core.factories import MINIMAL_PDF, ApplicationFactory, ResumeVersionFactory
 from resumes.models import ResumeVersion
+from resumes.serializers import ResumeVersionSerializer
 
 pytestmark = pytest.mark.django_db
 
@@ -49,10 +53,11 @@ def test_upload_rejects_disallowed_file_type(auth_client):
 
 
 def test_upload_rejects_oversized_file(auth_client, settings):
-    settings.RESUME_MAX_UPLOAD_BYTES = 10
-    response = auth_client.post(URL, {"name": "Big", "file": pdf()}, format="multipart")
+    settings.RESUME_MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+    oversized = pdf(content=b"x" * (2 * 1024 * 1024 + 1))
+    response = auth_client.post(URL, {"name": "Big", "file": oversized}, format="multipart")
     assert response.status_code == 400
-    assert "file" in response.json()
+    assert response.json()["file"] == ["File must be 2 MB or smaller."]
 
 
 def test_upload_requires_a_file(auth_client):
@@ -118,12 +123,56 @@ def test_download_of_missing_file_returns_404(auth_client, user):
     assert auth_client.get(file_url(resume)).status_code == 404
 
 
-def test_delete_removes_row_and_file_and_unlinks_applications(auth_client, user):
+def test_delete_removes_row_and_file_and_unlinks_applications(auth_client, user, django_capture_on_commit_callbacks):
     resume = ResumeVersionFactory(user=user)
     application = ApplicationFactory(user=user, resume_version=resume)
     storage, name = resume.file.storage, resume.file.name
-    assert auth_client.delete(detail_url(resume)).status_code == 204
+    with django_capture_on_commit_callbacks(execute=True):
+        assert auth_client.delete(detail_url(resume)).status_code == 204
     assert not ResumeVersion.objects.filter(pk=resume.pk).exists()
     assert not storage.exists(name)
     application.refresh_from_db()
     assert application.resume_version is None
+
+
+def stored_files():
+    folder = Path(settings.MEDIA_ROOT) / "resumes"
+    return sorted(folder.iterdir()) if folder.exists() else []
+
+
+def test_same_name_race_returns_400_and_leaves_no_orphaned_file(auth_client, user, monkeypatch):
+    ResumeVersionFactory(user=user, name="Cloud v2")
+    before = stored_files()
+    # Simulate a concurrent upload that passed validate_name: only the database catches it.
+    monkeypatch.setattr(ResumeVersionSerializer, "validate_name", lambda self, value: value)
+
+    response = auth_client.post(URL, {"name": "cloud V2", "file": pdf()}, format="multipart")
+
+    assert response.status_code == 400
+    assert response.json() == {"name": ["You already have a resume version with this name."]}
+    assert stored_files() == before
+
+
+def test_deleting_a_resume_outside_the_api_still_removes_its_file(user, django_capture_on_commit_callbacks):
+    resume = ResumeVersionFactory(user=user)
+    storage, name = resume.file.storage, resume.file.name
+    with django_capture_on_commit_callbacks(execute=True):
+        resume.delete()  # e.g. from the Django admin
+    assert not storage.exists(name)
+
+
+def test_deleting_a_user_removes_their_resume_files(user, django_capture_on_commit_callbacks):
+    resume = ResumeVersionFactory(user=user)
+    storage, name = resume.file.storage, resume.file.name
+    with django_capture_on_commit_callbacks(execute=True):
+        user.delete()
+    assert not storage.exists(name)
+
+
+def test_a_rolled_back_delete_keeps_the_file(user):
+    resume = ResumeVersionFactory(user=user)
+    storage, name = resume.file.storage, resume.file.name
+    with pytest.raises(RuntimeError), transaction.atomic():
+        resume.delete()
+        raise RuntimeError("roll back")
+    assert storage.exists(name)

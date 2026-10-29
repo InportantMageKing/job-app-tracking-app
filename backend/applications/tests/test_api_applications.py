@@ -1,8 +1,10 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
+from django.utils import timezone
 
 from applications.models import Application, ApplicationEvent, EventType, Source, Status
+from applications.serializers import ApplicationSerializer
 from applications.services import add_note
 from core.factories import ApplicationFactory, ResumeVersionFactory, apply_status_path
 
@@ -163,3 +165,46 @@ def test_patch_never_overwrites_a_concurrent_status_change(user):
     application.refresh_from_db()
     assert application.company == "New Name"
     assert application.current_status == Status.INTERVIEW
+
+
+def test_list_rejects_an_unknown_status_filter(auth_client):
+    response = auth_client.get(URL, {"status": "hired"})
+    assert response.status_code == 400
+    assert response.json() == {"status": ["'hired' is not a valid status."]}
+
+
+def test_list_rejects_an_unknown_source_filter(auth_client):
+    response = auth_client.get(URL, {"source": "monster"})
+    assert response.status_code == 400
+    assert "source" in response.json()
+
+
+def test_filters_do_not_apply_to_detail_routes(auth_client, user):
+    application = ApplicationFactory(user=user)  # status "applied"
+    assert auth_client.get(detail_url(application), {"status": "offer"}).status_code == 200
+
+
+def test_date_applied_cannot_be_in_the_future(auth_client):
+    tomorrow = (timezone.localdate() + timedelta(days=1)).isoformat()
+    response = auth_client.post(URL, {**NEW_APPLICATION, "date_applied": tomorrow})
+    assert response.status_code == 400
+    assert response.json() == {"date_applied": ["The application date can't be in the future."]}
+
+
+def test_patch_response_shows_the_stored_status_not_a_stale_copy(user):
+    application = ApplicationFactory(user=user)
+    stale = Application.objects.get(pk=application.pk)
+    # A concurrent request changes the status after this request loaded its copy.
+    Application.objects.filter(pk=application.pk).update(current_status=Status.INTERVIEW)
+
+    serializer = ApplicationSerializer(stale, data={"company": "Renamed"}, partial=True)
+    assert serializer.is_valid(), serializer.errors
+    serializer.save()
+    assert serializer.data["current_status"] == Status.INTERVIEW
+
+
+def test_serializer_without_a_request_accepts_no_resume_ids(user):
+    resume = ResumeVersionFactory(user=user)
+    serializer = ApplicationSerializer(data={**NEW_APPLICATION, "resume_version": resume.pk})
+    assert not serializer.is_valid()
+    assert "resume_version" in serializer.errors

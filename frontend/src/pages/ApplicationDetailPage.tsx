@@ -12,8 +12,11 @@ import { ui } from "../components/ui";
 
 export function ApplicationDetailPage() {
   const id = Number(useParams().id);
+  const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
-  const application = useApplication(id);
+  const [deleting, setDeleting] = useState(false);
+  // Stop observing once a delete starts, so dropping the deleted query from the cache doesn't refetch it.
+  const application = useApplication(id, { enabled: validId && !deleting });
   const update = useUpdateApplication(id);
   const addEvent = useAddEvent(id);
   const remove = useDeleteApplication();
@@ -23,21 +26,23 @@ export function ApplicationDetailPage() {
 
   async function handleDelete() {
     setDeleteError(null);
+    setDeleting(true);
     try {
       await remove.mutateAsync(id);
       navigate("/applications", { replace: true });
     } catch (caught) {
+      setDeleting(false);
       setDeleteError(caught instanceof Error ? caught.message : "Delete failed.");
     }
   }
 
-  if (application.isPending) return <p className={ui.muted}>Loading…</p>;
-  if (application.isError) {
-    const notFound = application.error instanceof ApiError && application.error.status === 404;
+  const notFound =
+    !validId || (application.isError && application.error instanceof ApiError && application.error.status === 404);
+  if (notFound || application.isError) {
     return (
       <div className="space-y-2">
         <p role="alert" className={ui.error}>
-          {notFound ? "This application doesn't exist." : application.error.message}
+          {notFound ? "This application doesn't exist." : application.error?.message}
         </p>
         <Link to="/applications" className="font-display text-sm font-semibold uppercase tracking-[0.1em] text-fog hover:text-chalk">
           ← Back to applications
@@ -45,6 +50,7 @@ export function ApplicationDetailPage() {
       </div>
     );
   }
+  if (application.isPending) return <p className={ui.muted}>Loading…</p>;
 
   const data = application.data;
 

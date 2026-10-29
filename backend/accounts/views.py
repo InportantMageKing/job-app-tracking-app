@@ -1,10 +1,11 @@
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .serializers import LoginSerializer, SignupSerializer
+from .throttles import AuthRateThrottle
 
 
 def _token_response(user, http_status):
@@ -15,6 +16,7 @@ def _token_response(user, http_status):
 @api_view(["POST"])
 @authentication_classes([])
 @permission_classes([AllowAny])
+@throttle_classes([AuthRateThrottle])
 def signup_view(request):
     serializer = SignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -25,6 +27,7 @@ def signup_view(request):
 @api_view(["POST"])
 @authentication_classes([])
 @permission_classes([AllowAny])
+@throttle_classes([AuthRateThrottle])
 def login_view(request):
     serializer = LoginSerializer(data=request.data, context={"request": request})
     serializer.is_valid(raise_exception=True)
@@ -33,5 +36,7 @@ def login_view(request):
 
 @api_view(["POST"])
 def logout_view(request):
-    request.auth.delete()
+    # Only token auth is configured, but guard anyway so another auth class can't crash logout.
+    if isinstance(request.auth, Token):
+        request.auth.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from applications.models import ApplicationEvent, EventType, Status
+from applications.models import Application, ApplicationEvent, EventType, Status
 from applications.services import (
     ApplicationRuleError,
     add_note,
@@ -95,3 +95,8 @@ def test_add_note_rejects_blank_text(application):
     with pytest.raises(ApplicationRuleError, match="required"):
         add_note(application=application, note="   ")
     assert ApplicationEvent.objects.filter(event_type=EventType.NOTE).count() == 0
+
+
+def test_change_status_updates_the_callers_updated_at(application):
+    change_status(application=application, to_status=Status.INTERVIEW)
+    assert application.updated_at == Application.objects.get(pk=application.pk).updated_at

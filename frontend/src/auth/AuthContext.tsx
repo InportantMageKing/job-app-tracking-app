@@ -50,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
           // The token may already be invalid; logging out locally is what matters.
         }
-        endSession();
+        // A 401 above already ended the session through the unauthorized handler (and cleared the token).
+        if (tokenStore.get()) endSession();
       },
     }),
     [username, authenticate, endSession],

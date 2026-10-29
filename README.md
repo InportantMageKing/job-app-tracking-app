@@ -17,7 +17,7 @@ docker compose up --build
 ```
 
 - App: http://localhost:5173
-- API: http://localhost:8000/api/ (the app reaches it through the Vite proxy at `/api`)
+- API: endpoints live under http://localhost:8000/api/ (there is no index page at `/api/` itself). The app reaches them through the Vite proxy at `/api`.
 - Health check: http://localhost:8000/api/health/
 - Django admin: http://localhost:8000/admin/ (create a login with `docker compose run --rm backend python manage.py createsuperuser`)
 
@@ -28,7 +28,7 @@ docker compose up -d --build
 docker compose run --rm backend python manage.py seed_testing
 ```
 
-Open http://localhost:5173 and log in as `tester1` / `testing-pass-123` (or `tester2` to see that accounts are isolated).
+Open http://localhost:5173 and log in as `tester1` / `testing-pass-123` (or `tester2` to see that accounts are isolated). The seed also creates a Django admin login, `qa-admin` / `testing-pass-123`, for http://localhost:8000/admin/.
 
 ## Test
 
