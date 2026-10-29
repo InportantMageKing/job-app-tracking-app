@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiFetch, errorMessage, setUnauthorizedHandler, tokenStore } from "./client";
+import { ApiError, apiDownload, apiFetch, errorMessage, setUnauthorizedHandler, tokenStore } from "./client";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -75,5 +75,28 @@ describe("errorMessage", () => {
   it("returns null for bodies it can't read", () => {
     expect(errorMessage(null)).toBeNull();
     expect(errorMessage("oops")).toBeNull();
+  });
+});
+
+describe("apiDownload", () => {
+  it("keeps the blob URL alive until after the click has started the download", async () => {
+    vi.useFakeTimers();
+    const createObjectURL = vi.fn(() => "blob:resume");
+    const revokeObjectURL = vi.fn();
+    const original = { createObjectURL: URL.createObjectURL, revokeObjectURL: URL.revokeObjectURL };
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    fetchMock.mockResolvedValue(new Response("%PDF-", { status: 200 }));
+
+    await apiDownload("/resume-versions/1/file/", "resume.pdf");
+
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    vi.runAllTimers();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:resume");
+
+    click.mockRestore();
+    Object.assign(URL, original);
+    vi.useRealTimers();
   });
 });

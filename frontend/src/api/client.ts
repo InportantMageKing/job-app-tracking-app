@@ -81,7 +81,8 @@ export async function apiDownload(path: string, filename: string): Promise<void>
   link.href = url;
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(url);
+  // Revoking in the same tick can cancel the download in some browsers, so wait for the click to be handled.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function jsonBody(data: unknown): string {
