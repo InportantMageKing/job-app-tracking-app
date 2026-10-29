@@ -14,6 +14,8 @@ from core.factories import ApplicationFactory, ResumeVersionFactory
 
 SEED_USERS = ["tester1", "tester2"]
 SEED_PASSWORD = "testing-pass-123"
+# A Django admin login. Not "admin", so a reseed never deletes an admin someone made by hand.
+SEED_ADMIN = "qa-admin"
 HISTORY_DAYS = 60
 
 RESUME_VERSIONS = [
@@ -45,7 +47,7 @@ NOTES = [
 
 
 class Command(BaseCommand):
-    help = "Delete and recreate the QA users tester1 and tester2 with realistic, backdated data."
+    help = "Delete and recreate the QA users tester1 and tester2 with realistic, backdated data, plus a qa-admin superuser."
 
     def add_arguments(self, parser):
         parser.add_argument("--applications", type=int, default=40, help="Applications per user (default 40).")
@@ -65,6 +67,10 @@ class Command(BaseCommand):
                 for _ in range(options["applications"]):
                     self._create_application(user, resumes, rng, now)
 
+        with transaction.atomic():
+            self._delete_user(SEED_ADMIN)
+            get_user_model().objects.create_superuser(username=SEED_ADMIN, password=SEED_PASSWORD)
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"Seeded {len(SEED_USERS)} users with {options['applications']} applications each."
@@ -72,6 +78,7 @@ class Command(BaseCommand):
         )
         for username in SEED_USERS:
             self.stdout.write(f"  login: {username} / {SEED_PASSWORD}")
+        self.stdout.write(f"  admin: {SEED_ADMIN} / {SEED_PASSWORD} at /admin/")
 
     def _delete_user(self, username):
         user = get_user_model().objects.filter(username=username).first()

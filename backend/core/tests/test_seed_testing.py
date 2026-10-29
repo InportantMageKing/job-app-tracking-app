@@ -121,3 +121,20 @@ def test_updated_at_matches_the_latest_event():
     for application in Application.objects.filter(user__username__in=SEED_USERS):
         latest = application.events.order_by("-created_at").first()
         assert application.updated_at == max(latest.created_at, application.created_at)
+
+
+def test_creates_a_superuser_for_the_django_admin(client):
+    output = seed()
+    admin = get_user_model().objects.get(username="qa-admin")
+    assert admin.is_superuser and admin.is_staff
+    assert "qa-admin / testing-pass-123" in output
+    assert client.login(username="qa-admin", password="testing-pass-123")
+    assert client.get("/admin/applications/application/").status_code == 200
+
+
+def test_rerun_keeps_a_single_superuser_and_leaves_other_admins_alone():
+    get_user_model().objects.create_superuser(username="admin", password="my-own-pass-123")
+    seed()
+    seed()
+    assert get_user_model().objects.filter(username="qa-admin").count() == 1
+    assert get_user_model().objects.get(username="admin").check_password("my-own-pass-123")
