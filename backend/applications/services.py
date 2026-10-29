@@ -40,7 +40,9 @@ def change_status(*, application, to_status, note=""):
         )
         locked.current_status = to_status
         locked.save(update_fields=["current_status", "updated_at"])
+    # Keep the caller's copy in step with what was saved.
     application.current_status = to_status
+    application.updated_at = locked.updated_at
     return event
 
 

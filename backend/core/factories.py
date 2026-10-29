@@ -9,7 +9,8 @@ from resumes.models import ResumeVersion
 
 TEST_PASSWORD = "test-pass-123"
 
-# Smallest file that PDF readers accept; good enough for upload/download tests.
+# A tiny file with a PDF header and trailer. Not a fully valid PDF (no xref table), but the
+# app only checks the extension, so it is enough for upload and download tests.
 MINIMAL_PDF = (
     b"%PDF-1.4\n"
     b"1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"

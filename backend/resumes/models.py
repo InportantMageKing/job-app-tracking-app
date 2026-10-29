@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.db import models
+from django.db.models.functions import Lower
 
 
 def resume_upload_to(instance, filename):
@@ -26,7 +27,8 @@ class ResumeVersion(models.Model):
     class Meta:
         ordering = ["-created_at", "-id"]
         constraints = [
-            models.UniqueConstraint(fields=["user", "name"], name="unique_resume_name_per_user"),
+            # Case-insensitive, matching the API check, so "Cloud v2" and "cloud V2" can't both exist.
+            models.UniqueConstraint("user", Lower("name"), name="unique_resume_name_per_user_ci"),
         ]
 
     def __str__(self):

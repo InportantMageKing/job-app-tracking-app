@@ -4,7 +4,7 @@ import pytest
 
 from applications.models import Application, Status
 from core.factories import ApplicationFactory, ResumeVersionFactory, apply_status_path
-from dashboard.services import applications_per_week, dashboard_stats, funnel, pipeline_counts
+from dashboard.services import applications_per_week, dashboard_stats, funnel, pipeline_counts, resume_performance
 
 pytestmark = pytest.mark.django_db
 
@@ -82,13 +82,13 @@ def test_applications_per_week_zero_fills_the_last_12_weeks(user):
 
 def test_resume_performance_groups_by_version(user, dataset):
     rows = {row["name"]: row for row in dashboard_stats(user)["resume_performance"]}
-    assert set(rows) == {"Backend v1", "None"}
+    assert set(rows) == {"Backend v1", "No resume"}
     assert rows["Backend v1"]["total"] == 2
     assert stage_counts(rows["Backend v1"])["interview"] == (2, 100.0)
     assert stage_counts(rows["Backend v1"])["offer"] == (1, 50.0)
-    assert rows["None"]["resume_version_id"] is None
-    assert rows["None"]["total"] == 2
-    assert stage_counts(rows["None"])["phone_screen"] == (1, 50.0)
+    assert rows["No resume"]["resume_version_id"] is None
+    assert rows["No resume"]["total"] == 2
+    assert stage_counts(rows["No resume"])["phone_screen"] == (1, 50.0)
 
 
 def test_resume_performance_omits_none_row_when_every_application_has_a_resume(user):
@@ -107,3 +107,20 @@ def test_stats_endpoint_returns_only_the_callers_data(auth_client, dataset):
 
 def test_stats_endpoint_requires_authentication(api_client):
     assert api_client.get("/api/dashboard/stats/").status_code == 401
+
+
+def test_resume_performance_uses_a_fixed_number_of_queries(user, django_assert_num_queries):
+    for name in ["A", "B", "C", "D", "E"]:
+        ApplicationFactory(user=user, resume_version=ResumeVersionFactory(user=user, name=name))
+    ApplicationFactory(user=user)  # no resume
+    with django_assert_num_queries(2):  # one grouped funnel query + the resume list
+        rows = resume_performance(user)
+    assert [row["name"] for row in rows] == ["A", "B", "C", "D", "E", "No resume"]
+
+
+def test_resume_performance_lists_versions_with_no_applications(user):
+    ResumeVersionFactory(user=user, name="Unused")
+    rows = resume_performance(user)
+    assert rows[0]["name"] == "Unused"
+    assert rows[0]["total"] == 0
+    assert all(stage["count"] == 0 and stage["percent"] == 0.0 for stage in rows[0]["stages"])

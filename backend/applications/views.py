@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from core.viewsets import OwnedByUserViewSet
 
-from .models import Application, EventType
+from .models import Application, EventType, Source, Status
 from .serializers import (
     ApplicationDetailSerializer,
     ApplicationEventSerializer,
@@ -29,17 +29,27 @@ class ApplicationViewSet(OwnedByUserViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        status_filter = self.request.query_params.get("status")
-        source_filter = self.request.query_params.get("source")
-        if status_filter:
-            queryset = queryset.filter(current_status=status_filter)
-        if source_filter:
-            queryset = queryset.filter(source=source_filter)
+        # Filters narrow the list only; a detail URL always finds its own object.
+        if self.action == "list":
+            queryset = self._filter_list(queryset)
         if self.action == "retrieve":
             queryset = queryset.prefetch_related("events")
         return queryset
 
+    def _filter_list(self, queryset):
+        for param, field, choices in [("status", "current_status", Status), ("source", "source", Source)]:
+            value = self.request.query_params.get(param)
+            if not value:
+                continue
+            # A typo should be an error, not an empty list that looks like "no results".
+            if value not in choices.values:
+                raise ValidationError({param: [f"{value!r} is not a valid {param}."]})
+            queryset = queryset.filter(**{field: value})
+        return queryset
+
     def perform_create(self, serializer):
+        # Create through the service so the first status event is written. Setting
+        # serializer.instance is what save() would have done, so the response renders it.
         serializer.instance = create_application(user=self.request.user, **serializer.validated_data)
 
     @action(detail=True, methods=["post"], url_path="events")
@@ -55,5 +65,6 @@ class ApplicationViewSet(OwnedByUserViewSet):
             else:
                 event = add_note(application=application, note=data["note"])
         except ApplicationRuleError as exc:
-            raise ValidationError({"detail": str(exc)})
+            # A plain string, like DRF's own {"detail": ...} errors (ValidationError would wrap it in a list).
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(ApplicationEventSerializer(event).data, status=status.HTTP_201_CREATED)

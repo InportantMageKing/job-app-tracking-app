@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from resumes.models import ResumeVersion
@@ -39,13 +40,22 @@ class ApplicationSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only the caller's resumes are valid choices, so a foreign ID is indistinguishable
-        # from one that doesn't exist (same error either way).
-        request = self.context.get("request")
-        if request is not None and "resume_version" in self.fields:
-            self.fields["resume_version"].queryset = ResumeVersion.objects.filter(user=request.user)
+        # from one that doesn't exist (same error either way). Without a request there is no
+        # caller to scope to, so fail closed and accept no resume IDs at all.
+        if "resume_version" in self.fields:
+            request = self.context.get("request")
+            owner_resumes = (
+                ResumeVersion.objects.filter(user=request.user) if request is not None else ResumeVersion.objects.none()
+            )
+            self.fields["resume_version"].queryset = owner_resumes
 
     def get_resume_version_name(self, obj):
         return obj.resume_version.name if obj.resume_version else None
+
+    def validate_date_applied(self, value):
+        if value > timezone.localdate():
+            raise serializers.ValidationError("The application date can't be in the future.")
+        return value
 
     def update(self, instance, validated_data):
         # Save only the edited columns, so a concurrent status change (which locks and
@@ -53,6 +63,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
         for field, value in validated_data.items():
             setattr(instance, field, value)
         instance.save(update_fields=[*validated_data, "updated_at"])
+        # The in-memory status may predate a concurrent change; respond with the stored one.
+        instance.refresh_from_db(fields=["current_status"])
         return instance
 
 

@@ -17,7 +17,7 @@ docker compose up --build
 ```
 
 - App: http://localhost:5173
-- API: http://localhost:8000/api/ (the app reaches it through the Vite proxy at `/api`)
+- API: endpoints live under http://localhost:8000/api/ (there is no index page at `/api/` itself). The app reaches them through the Vite proxy at `/api`.
 - Health check: http://localhost:8000/api/health/
 - Django admin: http://localhost:8000/admin/ (create a login with `docker compose run --rm backend python manage.py createsuperuser`)
 
