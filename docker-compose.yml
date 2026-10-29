@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: jobtracker
+      POSTGRES_USER: jobtracker
+      POSTGRES_PASSWORD: jobtracker
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobtracker -d jobtracker"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  backend:
+    build: ./backend
+    user: "1000:1000"
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_SECRET_KEY: dev-only-not-secret
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      POSTGRES_HOST: db
+      POSTGRES_DB: jobtracker
+      POSTGRES_USER: jobtracker
+      POSTGRES_PASSWORD: jobtracker
+      MEDIA_ROOT: /data/media
+      HOME: /tmp
+    volumes:
+      - ./backend:/app
+      - media_data:/data/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  media_data:

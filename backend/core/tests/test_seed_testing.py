@@ -1,0 +1,82 @@
+from datetime import timedelta
+from io import StringIO
+from pathlib import Path
+
+import pytest
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from django.utils import timezone
+
+from applications.models import Application, EventType
+
+pytestmark = pytest.mark.django_db
+
+SEED_USERS = ["tester1", "tester2"]
+
+
+def seed(applications=10):
+    out = StringIO()
+    call_command("seed_testing", applications=applications, stdout=out)
+    return out.getvalue()
+
+
+def test_creates_two_users_with_resumes_and_applications():
+    output = seed()
+    for username in SEED_USERS:
+        user = get_user_model().objects.get(username=username)
+        assert user.check_password("testing-pass-123")
+        assert user.applications.count() == 10
+        assert user.resume_versions.count() == 3
+        assert f"{username} / testing-pass-123" in output
+
+
+def test_is_idempotent():
+    seed()
+    seed()
+    assert get_user_model().objects.filter(username__in=SEED_USERS).count() == 2
+    for username in SEED_USERS:
+        user = get_user_model().objects.get(username=username)
+        assert user.applications.count() == 10
+        assert user.resume_versions.count() == 3
+
+
+def test_rerun_cleans_up_old_resume_files():
+    seed()
+    seed()
+    stored = list((Path(settings.MEDIA_ROOT) / "resumes").iterdir())
+    assert len(stored) == 6  # 3 resume versions x 2 users, nothing left over from the first run
+
+
+def test_current_status_matches_latest_status_event():
+    seed()
+    for application in Application.objects.filter(user__username__in=SEED_USERS):
+        latest = (
+            application.events.filter(event_type=EventType.STATUS_CHANGE)
+            .order_by("-created_at", "-id")
+            .first()
+        )
+        assert application.current_status == latest.to_status
+
+
+def test_history_is_backdated_and_consistent_with_date_applied():
+    seed()
+    now = timezone.now()
+    applications = Application.objects.filter(user__username__in=SEED_USERS)
+    all_event_times = []
+    for application in applications:
+        first = application.events.get(event_type=EventType.STATUS_CHANGE, from_status__isnull=True)
+        assert timezone.localdate(first.created_at) == application.date_applied
+        all_event_times.extend(application.events.values_list("created_at", flat=True))
+    assert all(now - timedelta(days=61) <= moment <= now for moment in all_event_times)
+    assert any(moment < now - timedelta(days=7) for moment in all_event_times)
+
+
+def test_seeded_user_can_log_in_and_load_the_dashboard(api_client):
+    seed()
+    login = api_client.post("/api/auth/login/", {"username": "tester1", "password": "testing-pass-123"})
+    assert login.status_code == 200
+    api_client.credentials(HTTP_AUTHORIZATION=f"Token {login.json()['token']}")
+    stats = api_client.get("/api/dashboard/stats/")
+    assert stats.status_code == 200
+    assert stats.json()["funnel"]["total"] == 10
